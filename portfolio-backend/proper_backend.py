@@ -1,7 +1,7 @@
 import http.server
 import socketserver
 import json
-import yfinance as yf
+import requests
 from datetime import datetime
 
 
@@ -21,62 +21,11 @@ class StockAPIHandler(http.server.BaseHTTPRequestHandler):
 
         elif self.path.startswith('/stocks/price/'):
             symbol = self.path.split('/')[-1]
-            print(f"📈 Fetching: {symbol}")
+            print(f"📈 Fetching real data for: {symbol}")
 
             try:
-                # Try multiple symbol formats
-                symbols_to_try = self.get_symbol_variants(symbol)
-                stock_data = None
-                working_symbol = symbol
-
-                for sym in symbols_to_try:
-                    try:
-                        print(f"🔍 Trying symbol: {sym}")
-                        stock = yf.Ticker(sym)
-                        history = stock.history(period="2d")
-
-                        if not history.empty and len(history) >= 2:
-                            print(f"✅ Found data for: {sym}")
-                            stock_data = stock
-                            working_symbol = sym
-                            break
-                        else:
-                            print(f"❌ No data for: {sym}")
-                    except Exception as e:
-                        print(f"⚠️ Error with {sym}: {e}")
-                        continue
-
-                if not stock_data:
-                    raise ValueError(
-                        f"No data found for {symbol} after trying: {', '.join(symbols_to_try)}")
-
-                # Get stock info
-                history = stock_data.history(period="2d")
-                current = history['Close'].iloc[-1]
-                previous = history['Close'].iloc[-2]
-                change = current - previous
-                change_percent = (change / previous) * 100
-
-                # Get additional info
-                try:
-                    info = stock_data.info
-                    company_name = info.get('longName', working_symbol)
-                    sector = info.get('sector', 'Unknown')
-                except:
-                    company_name = working_symbol
-                    sector = 'Unknown'
-
-                price_data = {
-                    "symbol": working_symbol,
-                    "name": company_name,
-                    "current_price": round(current, 2),
-                    "change": round(change, 2),
-                    "change_percent": round(change_percent, 2),
-                    "previous_close": round(previous, 2),
-                    "volume": int(history['Volume'].iloc[-1]),
-                    "sector": sector,
-                    "last_updated": datetime.now().isoformat()
-                }
+                # Get real stock data from Yahoo Finance API
+                price_data = self.get_real_stock_data(symbol)
 
                 response = {"success": True, "data": price_data}
                 self.send_response(200)
@@ -99,33 +48,62 @@ class StockAPIHandler(http.server.BaseHTTPRequestHandler):
             response = {"success": False, "error": "Endpoint not found"}
             self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def get_symbol_variants(self, symbol):
-        """Generate multiple symbol format variants to try"""
-        base_symbol = symbol.upper()
-        variants = [base_symbol]
+    def get_real_stock_data(self, symbol):
+        """Get real stock data from Yahoo Finance API"""
+        try:
+            # For Indian stocks, we need to use Yahoo Finance format
+            if symbol.endswith('.NS'):
+                yahoo_symbol = symbol  # RELIANCE.NS
+            else:
+                yahoo_symbol = symbol  # AAPL, TSLA, etc.
 
-        # Indian stock exchanges
-        variants.extend([
-            f"{base_symbol}.NS",  # NSE
-            f"{base_symbol}.BO",  # BSE
-        ])
+            # Yahoo Finance API endpoint
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}"
 
-        # If it already has suffix, try without
-        if '.' in base_symbol:
-            base_without_suffix = base_symbol.split('.')[0]
-            variants.extend([
-                base_without_suffix,
-                f"{base_without_suffix}.NS",
-                f"{base_without_suffix}.BO",
-            ])
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
 
-        # Common international suffixes
-        international_suffixes = ['.AX', '.L', '.TO', '.PA', '.DE', '.F']
-        variants.extend(
-            [f"{base_symbol}{suffix}" for suffix in international_suffixes])
+            response = requests.get(url, headers=headers, timeout=10)
+            print(f"🔍 Yahoo API Response Status: {response.status_code}")
 
-        # Remove duplicates and return
-        return list(dict.fromkeys(variants))
+            if response.status_code == 200:
+                data = response.json()
+                print(f"📊 Yahoo API Data: {json.dumps(data)[:200]}...")
+
+                if 'chart' in data and 'result' in data['chart'] and data['chart']['result']:
+                    result = data['chart']['result'][0]
+                    meta = result['meta']
+
+                    current_price = meta.get('regularMarketPrice', 0)
+                    previous_close = meta.get('previousClose', 0)
+
+                    if current_price == 0 or previous_close == 0:
+                        raise ValueError("Invalid price data from API")
+
+                    change = current_price - previous_close
+                    change_percent = (change / previous_close) * 100
+
+                    return {
+                        "symbol": symbol,
+                        "name": meta.get('longName', symbol),
+                        "current_price": round(current_price, 2),
+                        "change": round(change, 2),
+                        "change_percent": round(change_percent, 2),
+                        "previous_close": round(previous_close, 2),
+                        "volume": meta.get('regularMarketVolume', 0),
+                        "sector": meta.get('sector', 'N/A'),
+                        "last_updated": datetime.now().isoformat()
+                    }
+                else:
+                    raise ValueError("No chart data in API response")
+            else:
+                raise ValueError(
+                    f"API returned status code: {response.status_code}")
+
+        except Exception as e:
+            print(f"❌ Detailed error: {str(e)}")
+            raise ValueError(f"Failed to fetch real-time data: {str(e)}")
 
 
 def start_server():
@@ -136,9 +114,9 @@ def start_server():
             print(f"📍 URL: http://localhost:{PORT}")
             print("📊 Test these in your browser:")
             print("   1. http://localhost:8000/")
-            print("   2. http://localhost:8000/stocks/price/RELIANCE")
-            print("   3. http://localhost:8000/stocks/price/TCS")
-            print("   4. http://localhost:8000/stocks/price/AAPL")
+            print("   2. http://localhost:8000/stocks/price/AAPL")
+            print("   3. http://localhost:8000/stocks/price/TSLA")
+            print("   4. http://localhost:8000/stocks/price/RELIANCE.NS")
             print("\n⏳ Waiting for requests...")
             httpd.serve_forever()
     except OSError:
@@ -151,7 +129,7 @@ def start_server_with_port(port):
         with socketserver.TCPServer(("", port), StockAPIHandler) as httpd:
             print(f"🚀 BACKEND SERVER STARTED on port {port}!")
             print(f"📍 URL: http://localhost:{port}")
-            print(f"📊 Test: http://localhost:{port}/stocks/price/RELIANCE")
+            print(f"📊 Test: http://localhost:{port}/stocks/price/AAPL")
             httpd.serve_forever()
     except OSError:
         print(f"❌ Port {port} busy. Trying {port+1}...")
