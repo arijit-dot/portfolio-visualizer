@@ -1,6 +1,4 @@
-cd portfolio-backend
 echo "fastapi==0.104.1" > requirements.txt
 echo "uvicorn==0.24.0" >> requirements.txt
 echo "yfinance==0.2.18" >> requirements.txt
 echo "python-multipart==0.0.6" >> requirements.txt
-# Remove pandas, numpy for now - they're too heavy for deployment
