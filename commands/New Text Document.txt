@@ -1,0 +1,2 @@
+backend - python proper_backend.py
+front end -npm run dev
