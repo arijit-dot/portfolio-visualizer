@@ -24,29 +24,57 @@ class StockAPIHandler(http.server.BaseHTTPRequestHandler):
             print(f"📈 Fetching: {symbol}")
 
             try:
-                # Get real stock data
-                if not symbol.endswith('.NS'):
-                    symbol = f"{symbol}.NS"
+                # Try multiple symbol formats
+                symbols_to_try = self.get_symbol_variants(symbol)
+                stock_data = None
+                working_symbol = symbol
 
-                stock = yf.Ticker(symbol)
-                history = stock.history(period="2d")
+                for sym in symbols_to_try:
+                    try:
+                        print(f"🔍 Trying symbol: {sym}")
+                        stock = yf.Ticker(sym)
+                        history = stock.history(period="2d")
 
-                if history.empty:
-                    raise ValueError("No data found")
+                        if not history.empty and len(history) >= 2:
+                            print(f"✅ Found data for: {sym}")
+                            stock_data = stock
+                            working_symbol = sym
+                            break
+                        else:
+                            print(f"❌ No data for: {sym}")
+                    except Exception as e:
+                        print(f"⚠️ Error with {sym}: {e}")
+                        continue
 
+                if not stock_data:
+                    raise ValueError(
+                        f"No data found for {symbol} after trying: {', '.join(symbols_to_try)}")
+
+                # Get stock info
+                history = stock_data.history(period="2d")
                 current = history['Close'].iloc[-1]
-                previous = history['Close'].iloc[-2] if len(
-                    history) > 1 else current
+                previous = history['Close'].iloc[-2]
                 change = current - previous
                 change_percent = (change / previous) * 100
 
+                # Get additional info
+                try:
+                    info = stock_data.info
+                    company_name = info.get('longName', working_symbol)
+                    sector = info.get('sector', 'Unknown')
+                except:
+                    company_name = working_symbol
+                    sector = 'Unknown'
+
                 price_data = {
-                    "symbol": symbol,
+                    "symbol": working_symbol,
+                    "name": company_name,
                     "current_price": round(current, 2),
                     "change": round(change, 2),
                     "change_percent": round(change_percent, 2),
                     "previous_close": round(previous, 2),
                     "volume": int(history['Volume'].iloc[-1]),
+                    "sector": sector,
                     "last_updated": datetime.now().isoformat()
                 }
 
@@ -54,6 +82,7 @@ class StockAPIHandler(http.server.BaseHTTPRequestHandler):
                 self.send_response(200)
 
             except Exception as e:
+                print(f"❌ Error: {e}")
                 response = {"success": False, "error": str(e)}
                 self.send_response(400)
 
@@ -70,6 +99,34 @@ class StockAPIHandler(http.server.BaseHTTPRequestHandler):
             response = {"success": False, "error": "Endpoint not found"}
             self.wfile.write(json.dumps(response).encode('utf-8'))
 
+    def get_symbol_variants(self, symbol):
+        """Generate multiple symbol format variants to try"""
+        base_symbol = symbol.upper()
+        variants = [base_symbol]
+
+        # Indian stock exchanges
+        variants.extend([
+            f"{base_symbol}.NS",  # NSE
+            f"{base_symbol}.BO",  # BSE
+        ])
+
+        # If it already has suffix, try without
+        if '.' in base_symbol:
+            base_without_suffix = base_symbol.split('.')[0]
+            variants.extend([
+                base_without_suffix,
+                f"{base_without_suffix}.NS",
+                f"{base_without_suffix}.BO",
+            ])
+
+        # Common international suffixes
+        international_suffixes = ['.AX', '.L', '.TO', '.PA', '.DE', '.F']
+        variants.extend(
+            [f"{base_symbol}{suffix}" for suffix in international_suffixes])
+
+        # Remove duplicates and return
+        return list(dict.fromkeys(variants))
+
 
 def start_server():
     PORT = 8000
@@ -81,6 +138,7 @@ def start_server():
             print("   1. http://localhost:8000/")
             print("   2. http://localhost:8000/stocks/price/RELIANCE")
             print("   3. http://localhost:8000/stocks/price/TCS")
+            print("   4. http://localhost:8000/stocks/price/AAPL")
             print("\n⏳ Waiting for requests...")
             httpd.serve_forever()
     except OSError:
