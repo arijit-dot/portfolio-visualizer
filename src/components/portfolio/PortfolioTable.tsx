@@ -16,8 +16,6 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({
     onRemove
 }) => {
     const calculateHoldingValue = (holding: Holding) => {
-        // For now, we'll use purchase price as current price
-        // Later we'll replace with real-time data
         const currentPrice = holding.currentPrice || holding.purchasePrice;
         return holding.quantity * currentPrice;
     };
@@ -64,6 +62,9 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({
                             P&L
                         </th>
                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Value
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
@@ -74,6 +75,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({
                         const pnl = calculatePnL(holding);
                         const pnlPercentage = calculatePnLPercentage(holding);
                         const currentValue = calculateHoldingValue(holding);
+                        const currentPrice = holding.currentPrice || holding.purchasePrice;
 
                         return (
                             <tr key={holding.id} className="hover:bg-gray-50">
@@ -92,7 +94,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({
                                     {formatCurrency(holding.purchasePrice)}
                                 </td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {formatCurrency(currentValue)}
+                                    {formatCurrency(currentPrice)}
                                 </td>
                                 <td className="px-4 py-4 whitespace-nowrap">
                                     <div className={`text-sm font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'
@@ -103,6 +105,9 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({
                                         }`}>
                                         {pnl >= 0 ? '+' : ''}{pnlPercentage.toFixed(2)}%
                                     </div>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {formatCurrency(currentValue)}
                                 </td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="flex space-x-2">
