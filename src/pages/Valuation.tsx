@@ -16,7 +16,7 @@ const Valuation: React.FC = () => {
     const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
 
     // Use environment variable for API base URL
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const API_BASE = 'https://portfolio-visualizer-yql8.onrender.com';
 
     // Mock fundamental data for all stocks
     const stockFundamentals: { [key: string]: any } = {
