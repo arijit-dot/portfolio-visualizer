@@ -15,6 +15,9 @@ const Valuation: React.FC = () => {
     const [realStockPrices, setRealStockPrices] = useState<{ [key: string]: any }>({});
     const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
 
+    // Use environment variable for API base URL
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
     // Mock fundamental data for all stocks
     const stockFundamentals: { [key: string]: any } = {
         "RELIANCE.NS": {
@@ -63,7 +66,14 @@ const Valuation: React.FC = () => {
 
             try {
                 console.log(`📡 Fetching real price for valuation: ${selectedStock.symbol}`);
-                const response = await fetch(`http://localhost:8000/stocks/price/${selectedStock.symbol}`);
+                console.log(`🌐 Using API: ${API_BASE}/stocks/price/${selectedStock.symbol}`);
+
+                const response = await fetch(`${API_BASE}/stocks/price/${selectedStock.symbol}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
 
                 if (data.success) {
@@ -77,13 +87,14 @@ const Valuation: React.FC = () => {
                 }
             } catch (error) {
                 console.error('❌ Network error fetching valuation data:', error);
+                console.log('🔄 Falling back to mock data for:', selectedStock.symbol);
             } finally {
                 setLoading(prev => ({ ...prev, [selectedStock.symbol]: false }));
             }
         };
 
         fetchRealPrice();
-    }, [selectedStock]);
+    }, [selectedStock, API_BASE]);
 
     // Use real price if available, otherwise fallback to mock data
     const getStockData = () => {
@@ -166,8 +177,8 @@ const Valuation: React.FC = () => {
                                 <button
                                     key={stock.symbol}
                                     className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedStock.symbol === stock.symbol
-                                            ? 'bg-blue-50 border-blue-500 border-l-4'
-                                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-blue-50 border-blue-500 border-l-4'
+                                        : 'bg-white border-gray-200 hover:bg-gray-50'
                                         }`}
                                     onClick={() => setSelectedStock(stock)}
                                 >
