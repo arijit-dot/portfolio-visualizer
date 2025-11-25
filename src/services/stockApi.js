@@ -8,7 +8,7 @@ export const stockApi = {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-            const response = await fetch(`${API_BASE}/stocks/prices/${symbol}`, {
+            const response = await fetch(`${API_BASE}/stocks/price/${symbol}`, {
                 signal: controller.signal
             });
 
