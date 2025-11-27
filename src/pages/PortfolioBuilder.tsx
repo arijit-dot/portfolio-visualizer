@@ -63,20 +63,20 @@ const PortfolioBuilder: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full mx-auto px-3 sm:px-4 lg:px-6">
             {/* Page Header */}
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-900">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {portfolio.holdings.length > 0 ? 'Manage Portfolio' : 'Build Your Portfolio'}
                 </h1>
-                <div className="flex space-x-3">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     {portfolio.holdings.length > 0 && (
-                        <Button onClick={handleViewDashboard}>
-                            View Dashboard ({portfolio.holdings.length} holdings)
+                        <Button onClick={handleViewDashboard} className="text-sm sm:text-base">
+                            View Dashboard ({portfolio.holdings.length})
                         </Button>
                     )}
                     {/* Manual test button */}
-                    <Button variant="secondary" onClick={handleManualSave}>
+                    <Button variant="secondary" onClick={handleManualSave} className="text-sm sm:text-base">
                         💾 Test Save
                     </Button>
                 </div>
@@ -85,7 +85,7 @@ const PortfolioBuilder: React.FC = () => {
             {/* DEBUG CARD */}
             <Card title="🛠️ Debug Information">
                 <div className="text-sm space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <div className="font-medium">Portfolio Status:</div>
                             <div>Holdings count: <span className="font-bold">{portfolio.holdings.length}</span></div>
@@ -100,7 +100,7 @@ const PortfolioBuilder: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex space-x-2 pt-2">
+                    <div className="flex flex-wrap gap-2 pt-2">
                         <button
                             onClick={() => {
                                 console.log('📊 Current portfolio:', portfolio);
@@ -124,9 +124,9 @@ const PortfolioBuilder: React.FC = () => {
                 </div>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                 {/* Left Column - Stock Selection & Form */}
-                <div className="lg:col-span-1 space-y-6">
+                <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6">
                     <Card title="1. Select Stock">
                         <StockSelector
                             selectedStock={selectedStock}
@@ -147,7 +147,7 @@ const PortfolioBuilder: React.FC = () => {
                 </div>
 
                 {/* Right Column - Portfolio Table */}
-                <div className="lg:col-span-2">
+                <div className="w-full lg:w-2/3">
                     <Card
                         title="Your Portfolio"
                         actions={
@@ -159,23 +159,27 @@ const PortfolioBuilder: React.FC = () => {
                         }
                     >
                         {portfolio.holdings.length > 0 ? (
-                            <PortfolioTable
-                                holdings={portfolio.holdings}
-                                onEdit={handleEditHolding}
-                                onRemove={removeHolding}
-                            />
+                            <div className="overflow-x-auto">
+                                <div className="min-w-[600px]">
+                                    <PortfolioTable
+                                        holdings={portfolio.holdings}
+                                        onEdit={handleEditHolding}
+                                        onRemove={removeHolding}
+                                    />
+                                </div>
+                            </div>
                         ) : (
-                            <div className="text-center py-12">
+                            <div className="text-center py-8 sm:py-12">
                                 <div className="text-gray-400 mb-4">
-                                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                 </div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">No holdings yet</h3>
-                                <p className="text-gray-600 mb-4">
+                                <p className="text-gray-600 mb-4 text-sm sm:text-base">
                                     Select a stock and add purchase details to build your portfolio.
                                 </p>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-xs sm:text-sm text-gray-500 space-y-1">
                                     <p>• Click on any stock from the left panel</p>
                                     <p>• Enter quantity, purchase price, and date</p>
                                     <p>• Click "Add to Portfolio"</p>

@@ -156,69 +156,69 @@ const Valuation: React.FC = () => {
     }[recommendation];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full mx-auto px-3 sm:px-4 lg:px-6">
             {/* Page Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Valuation Analysis</h1>
-                    <p className="text-gray-600 mt-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Valuation Analysis</h1>
+                    <p className="text-gray-600 mt-1 text-sm sm:text-base">
                         Discounted Cash Flow (DCF) Valuation
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                 {/* Left Column - Stock Selection & Info */}
-                <div className="lg:col-span-1 space-y-6">
+                <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6">
                     {/* Stock Selection */}
-                    <Card title="Select Stock to Analyze">
+                    <Card title="Select Stock to Analyze" className="p-3 sm:p-4">
                         <div className="space-y-2">
                             {MVP_STOCKS.map((stock) => (
                                 <button
                                     key={stock.symbol}
-                                    className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedStock.symbol === stock.symbol
+                                    className={`w-full text-left p-2 sm:p-3 rounded-lg border transition-colors text-sm sm:text-base ${selectedStock.symbol === stock.symbol
                                         ? 'bg-blue-50 border-blue-500 border-l-4'
                                         : 'bg-white border-gray-200 hover:bg-gray-50'
                                         }`}
                                     onClick={() => setSelectedStock(stock)}
                                 >
                                     <div className="font-medium text-gray-900">{stock.name}</div>
-                                    <div className="text-sm text-gray-600">{stock.symbol}</div>
+                                    <div className="text-xs sm:text-sm text-gray-600">{stock.symbol}</div>
                                 </button>
                             ))}
                         </div>
                     </Card>
 
                     {/* Stock Information */}
-                    <Card title="Stock Information">
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Symbol:</span>
-                                <span className="font-medium">{selectedStock.symbol}</span>
+                    <Card title="Stock Information" className="p-3 sm:p-4">
+                        <div className="space-y-2 sm:space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm sm:text-base">Symbol:</span>
+                                <span className="font-medium text-sm sm:text-base">{selectedStock.symbol}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Current Price:</span>
-                                <span className="font-medium">
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm sm:text-base">Current Price:</span>
+                                <span className="font-medium text-sm sm:text-base">
                                     {formatCurrency(stockData.currentPrice)}
                                     {stockData.isRealData && (
                                         <span className="ml-1 text-xs text-green-600">● Live</span>
                                     )}
                                 </span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">EPS (TTM):</span>
-                                <span className="font-medium">₹{stockData.eps}</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm sm:text-base">EPS (TTM):</span>
+                                <span className="font-medium text-sm sm:text-base">₹{stockData.eps}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Sector:</span>
-                                <span className="font-medium">{stockData.sector}</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm sm:text-base">Sector:</span>
+                                <span className="font-medium text-sm sm:text-base">{stockData.sector}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Market Cap:</span>
-                                <span className="font-medium">{stockData.marketCap}</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm sm:text-base">Market Cap:</span>
+                                <span className="font-medium text-sm sm:text-base">{stockData.marketCap}</span>
                             </div>
                             {loading[selectedStock.symbol] && (
-                                <div className="text-center text-blue-600 text-sm">
+                                <div className="text-center text-blue-600 text-xs sm:text-sm">
                                     🔄 Loading real-time data...
                                 </div>
                             )}
@@ -226,8 +226,8 @@ const Valuation: React.FC = () => {
                     </Card>
 
                     {/* DCF Assumptions */}
-                    <Card title="DCF Assumptions">
-                        <div className="space-y-4">
+                    <Card title="DCF Assumptions" className="p-3 sm:p-4">
+                        <div className="space-y-3 sm:space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Growth Rate ({growthRate}%)
@@ -241,7 +241,7 @@ const Valuation: React.FC = () => {
                                     onChange={(e) => setGrowthRate(parseFloat(e.target.value))}
                                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
-                                <div className="flex justify-between text-xs text-gray-500">
+                                <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>0%</span>
                                     <span>10%</span>
                                     <span>20%</span>
@@ -261,7 +261,7 @@ const Valuation: React.FC = () => {
                                     onChange={(e) => setDiscountRate(parseFloat(e.target.value))}
                                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
-                                <div className="flex justify-between text-xs text-gray-500">
+                                <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>8%</span>
                                     <span>14%</span>
                                     <span>20%</span>
@@ -281,7 +281,7 @@ const Valuation: React.FC = () => {
                                     onChange={(e) => setTerminalGrowth(parseFloat(e.target.value))}
                                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
-                                <div className="flex justify-between text-xs text-gray-500">
+                                <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>1%</span>
                                     <span>3%</span>
                                     <span>5%</span>
@@ -290,7 +290,7 @@ const Valuation: React.FC = () => {
 
                             <Button
                                 variant="secondary"
-                                className="w-full"
+                                className="w-full text-sm sm:text-base"
                                 onClick={() => {
                                     setGrowthRate(DCF_ASSUMPTIONS.defaultGrowthRate * 100);
                                     setDiscountRate(DCF_ASSUMPTIONS.defaultDiscountRate * 100);
@@ -304,47 +304,47 @@ const Valuation: React.FC = () => {
                 </div>
 
                 {/* Right Column - Results */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="w-full lg:w-2/3 space-y-4 sm:space-y-6">
                     {/* Valuation Results */}
-                    <Card title={`Valuation Results - ${stockData.name}`}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="text-center p-6 bg-blue-50 rounded-lg">
-                                <div className="text-2xl font-bold text-blue-900 mb-2">
+                    <Card title={`Valuation Results - ${stockData.name}`} className="p-3 sm:p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                            <div className="text-center p-4 sm:p-6 bg-blue-50 rounded-lg">
+                                <div className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
                                     {formatCurrency(dcfResult.intrinsicValue)}
                                 </div>
-                                <div className="text-blue-700 font-medium">Intrinsic Value</div>
-                                <div className="text-sm text-blue-600 mt-2">
+                                <div className="text-blue-700 font-medium text-sm sm:text-base">Intrinsic Value</div>
+                                <div className="text-xs sm:text-sm text-blue-600 mt-2">
                                     Based on DCF model
                                 </div>
                             </div>
 
-                            <div className="text-center p-6 bg-green-50 rounded-lg">
-                                <div className="text-2xl font-bold text-green-900 mb-2">
+                            <div className="text-center p-4 sm:p-6 bg-green-50 rounded-lg">
+                                <div className="text-xl sm:text-2xl font-bold text-green-900 mb-2">
                                     {formatPercentage(dcfResult.marginOfSafety / 100)}
                                 </div>
-                                <div className="text-green-700 font-medium">Margin of Safety</div>
-                                <div className="text-sm text-green-600 mt-2">
+                                <div className="text-green-700 font-medium text-sm sm:text-base">Margin of Safety</div>
+                                <div className="text-xs sm:text-sm text-green-600 mt-2">
                                     Current price vs intrinsic value
                                 </div>
                             </div>
                         </div>
 
                         {/* Recommendation */}
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="text-lg font-semibold text-gray-900">
+                        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                                <div className="flex-1">
+                                    <div className="text-base sm:text-lg font-semibold text-gray-900">
                                         Recommendation: <span className={recommendationColor}>{recommendation}</span>
                                     </div>
-                                    <div className="text-sm text-gray-600 mt-1">
+                                    <div className="text-xs sm:text-sm text-gray-600 mt-1">
                                         {recommendation === 'BUY' && 'Stock appears significantly undervalued'}
                                         {recommendation === 'HOLD' && 'Stock appears fairly valued'}
                                         {recommendation === 'SELL' && 'Stock appears overvalued'}
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-sm text-gray-600">Current Price</div>
-                                    <div className="text-lg font-bold text-gray-900">
+                                    <div className="text-xs sm:text-sm text-gray-600">Current Price</div>
+                                    <div className="text-base sm:text-lg font-bold text-gray-900">
                                         {formatCurrency(stockData.currentPrice)}
                                         {stockData.isRealData && (
                                             <span className="ml-1 text-xs text-green-600">● Live</span>
@@ -356,28 +356,34 @@ const Valuation: React.FC = () => {
                     </Card>
 
                     {/* Model Details */}
-                    <Card title="DCF Model Details">
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="text-gray-600">Projection Period:</div>
-                                <div className="font-medium">5 years</div>
-
-                                <div className="text-gray-600">EPS Growth Rate:</div>
-                                <div className="font-medium">{growthRate}% per year</div>
-
-                                <div className="text-gray-600">Discount Rate (WACC):</div>
-                                <div className="font-medium">{discountRate}%</div>
-
-                                <div className="text-gray-600">Terminal Growth:</div>
-                                <div className="font-medium">{terminalGrowth}%</div>
-
-                                <div className="text-gray-600">Projected EPS (Year 5):</div>
-                                <div className="font-medium">₹{dcfResult.projectedEPS.toFixed(2)}</div>
+                    <Card title="DCF Model Details" className="p-3 sm:p-4">
+                        <div className="space-y-3 sm:space-y-4">
+                            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                                <div className="flex justify-between xs:block">
+                                    <span className="text-gray-600 text-sm">Projection Period:</span>
+                                    <span className="font-medium text-sm">5 years</span>
+                                </div>
+                                <div className="flex justify-between xs:block">
+                                    <span className="text-gray-600 text-sm">EPS Growth Rate:</span>
+                                    <span className="font-medium text-sm">{growthRate}% per year</span>
+                                </div>
+                                <div className="flex justify-between xs:block">
+                                    <span className="text-gray-600 text-sm">Discount Rate (WACC):</span>
+                                    <span className="font-medium text-sm">{discountRate}%</span>
+                                </div>
+                                <div className="flex justify-between xs:block">
+                                    <span className="text-gray-600 text-sm">Terminal Growth:</span>
+                                    <span className="font-medium text-sm">{terminalGrowth}%</span>
+                                </div>
+                                <div className="flex justify-between xs:block">
+                                    <span className="text-gray-600 text-sm">Projected EPS (Year 5):</span>
+                                    <span className="font-medium text-sm">₹{dcfResult.projectedEPS.toFixed(2)}</span>
+                                </div>
                             </div>
 
-                            <div className="pt-4 border-t border-gray-200">
-                                <h4 className="font-medium text-gray-900 mb-2">Methodology</h4>
-                                <p className="text-sm text-gray-600">
+                            <div className="pt-3 sm:pt-4 border-t border-gray-200">
+                                <h4 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Methodology</h4>
+                                <p className="text-xs sm:text-sm text-gray-600">
                                     The DCF model projects future earnings and discounts them back to present value
                                     using your specified discount rate. The terminal value accounts for perpetual
                                     growth beyond the projection period.
@@ -387,10 +393,10 @@ const Valuation: React.FC = () => {
                     </Card>
 
                     {/* Disclaimer */}
-                    <Card>
+                    <Card className="p-3 sm:p-4">
                         <div className="text-xs text-gray-500">
                             <p className="font-medium mb-1">Disclaimer:</p>
-                            <p>
+                            <p className="text-xs">
                                 This valuation is for educational purposes only. The DCF model relies on several assumptions
                                 that may not reflect actual market conditions. Always conduct your own research and consult
                                 with a financial advisor before making investment decisions.

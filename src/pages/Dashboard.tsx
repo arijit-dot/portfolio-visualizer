@@ -133,6 +133,7 @@ const Dashboard: React.FC = () => {
     // Chart options
     const performanceChartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top' as const,
@@ -151,6 +152,7 @@ const Dashboard: React.FC = () => {
 
     const allocationChartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'bottom' as const,
@@ -160,10 +162,10 @@ const Dashboard: React.FC = () => {
 
     if (!isLoaded) {
         return (
-            <div className="text-center py-12">
+            <div className="text-center py-8 sm:py-12 px-4">
                 <div className="max-w-md mx-auto">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h2>
-                    <p className="text-gray-600">Loading your portfolio data...</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Loading...</h2>
+                    <p className="text-gray-600 text-sm sm:text-base">Loading your portfolio data...</p>
                 </div>
             </div>
         );
@@ -171,16 +173,16 @@ const Dashboard: React.FC = () => {
 
     if (!hasHoldings) {
         return (
-            <div className="text-center py-12">
+            <div className="text-center py-8 sm:py-12 px-4">
                 <div className="max-w-md mx-auto">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
                         No Portfolio Found
                     </h2>
-                    <p className="text-gray-600 mb-8">
+                    <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
                         Create a portfolio to see your dashboard.
                     </p>
                     <Link to="/portfolio">
-                        <Button size="lg">
+                        <Button size="lg" className="text-sm sm:text-base">
                             Create Portfolio
                         </Button>
                     </Link>
@@ -190,92 +192,94 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full mx-auto px-3 sm:px-4 lg:px-6">
             {/* Page Header */}
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-900">Portfolio Dashboard</h1>
-                <div className="flex space-x-3">
-                    <Button variant="secondary" onClick={refreshPrices}>
-                        🔄 Refresh Prices
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Portfolio Dashboard</h1>
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <Button variant="secondary" onClick={refreshPrices} className="text-xs sm:text-sm">
+                        🔄 Refresh
                     </Button>
                     <Link to="/portfolio">
-                        <Button variant="secondary">Edit Portfolio</Button>
+                        <Button variant="secondary" className="text-xs sm:text-sm">Edit Portfolio</Button>
                     </Link>
                     <Link to="/valuation">
-                        <Button>Valuation Analysis</Button>
+                        <Button className="text-xs sm:text-sm">Valuation</Button>
                     </Link>
                 </div>
             </div>
 
             {/* Portfolio Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card title="Portfolio Value">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                <Card className="p-3 sm:p-4">
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-900">
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                             {formatCurrency(metrics.portfolioValue)}
                         </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                            Current value
+                        <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                            Portfolio Value
                         </div>
                     </div>
                 </Card>
 
-                <Card title="Total P&L">
+                <Card className="p-3 sm:p-4">
                     <div className="text-center">
-                        <div className={`text-2xl font-bold ${metrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                        <div className={`text-lg sm:text-xl md:text-2xl font-bold ${metrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
                             {formatCurrency(metrics.totalPnL)}
                         </div>
-                        <div className={`text-sm ${metrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`text-xs sm:text-sm ${metrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatPercentage(metrics.totalPnLPercentage / 100)}
                         </div>
+                        <div className="text-xs text-gray-500 mt-1">Total P&L</div>
                     </div>
                 </Card>
 
-                <Card title="Today's P&L">
+                <Card className="p-3 sm:p-4">
                     <div className="text-center">
-                        <div className={`text-2xl font-bold ${metrics.todaysPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                        <div className={`text-lg sm:text-xl md:text-2xl font-bold ${metrics.todaysPnL >= 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
                             {formatCurrency(metrics.todaysPnL)}
                         </div>
-                        <div className={`text-sm ${metrics.todaysPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatPercentage(0.0054)} {/* +0.54% */}
+                        <div className={`text-xs sm:text-sm ${metrics.todaysPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatPercentage(0.0054)}
                         </div>
+                        <div className="text-xs text-gray-500 mt-1">Today's P&L</div>
                     </div>
                 </Card>
 
-                <Card title="Holdings">
+                <Card className="p-3 sm:p-4">
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-900">
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                             {metrics.holdingsCount}
                         </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                            Stocks
+                        <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                            Holdings
                         </div>
                     </div>
                 </Card>
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card title="Performance vs Benchmark">
-                    <div className="h-80">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+                <Card title="Performance vs Benchmark" className="p-3 sm:p-4">
+                    <div className="h-64 sm:h-72 md:h-80">
                         {chartData ? (
                             <Line data={chartData} options={performanceChartOptions} />
                         ) : (
-                            <div className="h-full flex items-center justify-center text-gray-500">
+                            <div className="h-full flex items-center justify-center text-gray-500 text-sm">
                                 Loading chart...
                             </div>
                         )}
                     </div>
                 </Card>
 
-                <Card title="Sector Allocation">
-                    <div className="h-80">
+                <Card title="Sector Allocation" className="p-3 sm:p-4">
+                    <div className="h-64 sm:h-72 md:h-80">
                         {allocationData ? (
                             <Doughnut data={allocationData} options={allocationChartOptions} />
                         ) : (
-                            <div className="h-full flex items-center justify-center text-gray-500">
+                            <div className="h-full flex items-center justify-center text-gray-500 text-sm">
                                 Loading allocation...
                             </div>
                         )}
@@ -284,23 +288,23 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Risk Metrics */}
-            <Card title="Risk Analytics">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <div className="text-xl font-bold text-blue-900">16.8%</div>
-                        <div className="text-sm text-blue-700">Volatility</div>
+            <Card title="Risk Analytics" className="p-3 sm:p-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-lg">
+                        <div className="text-lg sm:text-xl font-bold text-blue-900">16.8%</div>
+                        <div className="text-xs sm:text-sm text-blue-700">Volatility</div>
                     </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <div className="text-xl font-bold text-green-900">1.05</div>
-                        <div className="text-sm text-green-700">Beta vs Nifty</div>
+                    <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg">
+                        <div className="text-lg sm:text-xl font-bold text-green-900">1.05</div>
+                        <div className="text-xs sm:text-sm text-green-700">Beta vs Nifty</div>
                     </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                        <div className="text-xl font-bold text-yellow-900">-12.3%</div>
-                        <div className="text-sm text-yellow-700">Max Drawdown</div>
+                    <div className="text-center p-3 sm:p-4 bg-yellow-50 rounded-lg">
+                        <div className="text-lg sm:text-xl font-bold text-yellow-900">-12.3%</div>
+                        <div className="text-xs sm:text-sm text-yellow-700">Max Drawdown</div>
                     </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                        <div className="text-xl font-bold text-purple-900">0.89</div>
-                        <div className="text-sm text-purple-700">Sharpe Ratio</div>
+                    <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-lg">
+                        <div className="text-lg sm:text-xl font-bold text-purple-900">0.89</div>
+                        <div className="text-xs sm:text-sm text-purple-700">Sharpe Ratio</div>
                     </div>
                 </div>
             </Card>
@@ -309,68 +313,71 @@ const Dashboard: React.FC = () => {
             <Card
                 title="Your Holdings"
                 actions={
-                    <div className="text-sm text-gray-600">
+                    <div className="text-xs sm:text-sm text-gray-600">
                         Total: {formatCurrency(metrics.portfolioValue)}
                     </div>
                 }
+                className="p-3 sm:p-4"
             >
-                <div className="overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Cost</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">P&L</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {portfolio.holdings.map((holding) => {
-                                const stock = getStockBySymbol(holding.symbol);
-                                const currentPrice = holding.currentPrice || holding.purchasePrice;
-                                const currentValue = holding.quantity * currentPrice;
-                                const pnl = getHoldingPnL(holding);
-                                const pnlPercentage = getHoldingPnLPercentage(holding);
+                <div className="overflow-x-auto">
+                    <div className="min-w-[600px]">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Cost</th>
+                                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Current</th>
+                                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">P&L</th>
+                                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {portfolio.holdings.map((holding) => {
+                                    const stock = getStockBySymbol(holding.symbol);
+                                    const currentPrice = holding.currentPrice || holding.purchasePrice;
+                                    const currentValue = holding.quantity * currentPrice;
+                                    const pnl = getHoldingPnL(holding);
+                                    const pnlPercentage = getHoldingPnLPercentage(holding);
 
-                                return (
-                                    <tr key={holding.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-4 whitespace-nowrap">
-                                            <div>
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {stock?.name || holding.symbol}
+                                    return (
+                                        <tr key={holding.id} className="hover:bg-gray-50">
+                                            <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {stock?.name || holding.symbol}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">{holding.symbol}</div>
                                                 </div>
-                                                <div className="text-sm text-gray-500">{holding.symbol}</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {holding.quantity}
-                                        </td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {formatCurrency(holding.purchasePrice)}
-                                        </td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {formatCurrency(currentPrice)}
-                                        </td>
-                                        <td className="px-4 py-4 whitespace-nowrap">
-                                            <div className={`text-sm font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'
-                                                }`}>
-                                                {formatCurrency(pnl)}
-                                            </div>
-                                            <div className={`text-xs ${pnl >= 0 ? 'text-green-500' : 'text-red-500'
-                                                }`}>
-                                                {pnl >= 0 ? '+' : ''}{pnlPercentage.toFixed(2)}%
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {formatCurrency(currentValue)}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                            </td>
+                                            <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {holding.quantity}
+                                            </td>
+                                            <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {formatCurrency(holding.purchasePrice)}
+                                            </td>
+                                            <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {formatCurrency(currentPrice)}
+                                            </td>
+                                            <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap">
+                                                <div className={`text-sm font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                                                    }`}>
+                                                    {formatCurrency(pnl)}
+                                                </div>
+                                                <div className={`text-xs ${pnl >= 0 ? 'text-green-500' : 'text-red-500'
+                                                    }`}>
+                                                    {pnl >= 0 ? '+' : ''}{pnlPercentage.toFixed(2)}%
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3 sm:px-4 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {formatCurrency(currentValue)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </Card>
         </div>
