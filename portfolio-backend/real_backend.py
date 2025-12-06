@@ -1,4 +1,5 @@
 import http.server
+import os
 import socketserver
 import json
 import yfinance as yf
@@ -225,7 +226,7 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
 
 
 def start_server():
-    PORT = 8000
+    PORT = int(os.environ.get("PORT", 8000))
     with socketserver.TCPServer(("", PORT), RealStockAPIHandler) as httpd:
         print("🚀 Portfolio Backend Server with REAL DATA Started!")
         print(f"📍 Running at: http://localhost:{PORT}")
