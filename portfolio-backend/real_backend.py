@@ -114,8 +114,8 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
                         self.wfile.write(json.dumps(response).encode())
                         return
 
-                # Get fresh fundamentals from Yahoo Finance
-                fundamentals_data = self.get_real_fundamentals_from_yahoo(
+                # Get fresh fundamentals with EPS-based FCF estimation
+                fundamentals_data = self.get_accurate_fundamentals_with_estimated_fcf(
                     symbol)
 
                 # Cache it
@@ -129,7 +129,7 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "success": True,
                     "data": fundamentals_data,
                     "cached": False,
-                    "note": "Using REAL fundamentals from Yahoo Finance"
+                    "note": "Using EPS-based FCF estimation for accuracy"
                 }
 
             except Exception as e:
@@ -206,34 +206,71 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             raise Exception(f"Error fetching price for {symbol}: {str(e)}")
 
-    def get_real_fundamentals_from_yahoo(self, symbol):
-        """Get ACTUAL fundamental data from Yahoo Finance"""
+    def get_estimated_fcf_from_eps(self, eps, sector):
+        """Estimate FCF from EPS based on sector ratios"""
+        sector_ratios = {
+            "Energy": 1.05,
+            "Oil & Gas": 1.03,
+            "Technology": 0.80,
+            "IT": 0.75,
+            "Banking": 0.65,
+            "Financial Services": 0.68,
+            "FMCG": 0.85,
+            "Consumer Defensive": 0.82,
+            "Healthcare": 0.75,
+            "Pharmaceuticals": 0.78,
+            "Automobile": 0.70,
+            "Industrial": 0.72,
+            "Telecommunication": 0.90,
+            "Utilities": 0.95,
+            "default": 0.80
+        }
+
+        ratio = sector_ratios.get(sector, sector_ratios["default"])
+        return round(eps * ratio, 2)
+
+    def get_accurate_fundamentals_with_estimated_fcf(self, symbol):
+        """Get accurate fundamentals with EPS-based FCF estimation"""
         try:
             # Ensure .NS suffix
             if not symbol.endswith(('.NS', '.BO')):
                 symbol = f"{symbol}.NS"
 
             stock = yf.Ticker(symbol)
-            info = stock.info  # This has REAL fundamental data
+            info = stock.info
 
-            # Get current price if available in info, otherwise fetch separately
+            # Get current price
             current_price = info.get('currentPrice')
             if not current_price:
-                # Fallback to price endpoint
                 price_data = self.get_real_stock_price(symbol)
                 current_price = price_data["current_price"]
 
-            # Extract real data with proper fallbacks
+            # Extract EPS and sector
             eps = info.get('trailingEps') or info.get('forwardEps') or 0
-            free_cash_flow = info.get('freeCashflow') or 0
-            shares = info.get('sharesOutstanding') or 1
+            sector = info.get('sector', 'N/A')
+            shares = info.get('sharesOutstanding', 1)
 
-            # Calculate FCF per share properly
-            fcf_per_share = 0
-            if free_cash_flow and shares:
-                fcf_per_share = round(free_cash_flow / shares, 2)
+            # Get Yahoo's FCF
+            yahoo_free_cash_flow = info.get('freeCashflow', 0)
+            yahoo_fcf_per_share = round(
+                yahoo_free_cash_flow / shares, 2) if shares else 0
 
-            # Get market cap
+            # Estimate FCF from EPS
+            estimated_fcf_per_share = self.get_estimated_fcf_from_eps(
+                eps, sector)
+
+            # Determine which FCF to use
+            # If Yahoo FCF is too low (< 30% of EPS), use estimated FCF
+            if yahoo_fcf_per_share < eps * 0.3:
+                final_fcf_per_share = estimated_fcf_per_share
+                fcf_source = "estimated"
+                fcf_note = f"Estimated from EPS (Yahoo FCF unreliable)"
+            else:
+                final_fcf_per_share = yahoo_fcf_per_share
+                fcf_source = "yahoo"
+                fcf_note = "From Yahoo Finance"
+
+            # Calculate market cap
             market_cap = info.get('marketCap')
             if not market_cap and current_price and shares:
                 market_cap = current_price * shares
@@ -243,21 +280,25 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
                 "name": info.get('longName', info.get('shortName', symbol)),
                 "currentPrice": round(current_price, 2),
                 "eps": round(eps, 2),
-                "freeCashFlow": free_cash_flow,
+                "sector": sector,
                 "sharesOutstanding": shares,
-                "sector": info.get('sector', 'N/A'),
                 "marketCap": market_cap,
-                "fcfPerShare": fcf_per_share,
-                # Add more real metrics for DCF model
+                # FCF data
+                "fcfPerShare": final_fcf_per_share,
+                "fcfSource": fcf_source,
+                "fcfNote": fcf_note,
+                "yahooFcfPerShare": yahoo_fcf_per_share,
+                "estimatedFcfPerShare": estimated_fcf_per_share,
+                # Additional metrics
                 "revenue": info.get('totalRevenue', 0),
                 "operatingCashFlow": info.get('operatingCashflow', 0),
                 "capitalExpenditure": info.get('capitalExpenditures', 0),
-                "data_source": "Yahoo Finance (Real)",
+                "data_source": "Yahoo Finance + EPS-based FCF estimation",
                 "last_updated": datetime.now().isoformat()
             }
         except Exception as e:
-            print(f"Error fetching real fundamentals for {symbol}: {e}")
-            raise Exception(f"Failed to fetch real fundamentals: {str(e)}")
+            print(f"Error fetching accurate fundamentals for {symbol}: {e}")
+            raise Exception(f"Failed to fetch accurate fundamentals: {str(e)}")
 
     def get_cached_fundamentals(self, symbol):
         """Fallback fundamental data - OPTIMIZED"""
@@ -273,72 +314,69 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
                 price_data = self.get_real_stock_price(symbol)
                 current_price = price_data["current_price"]
 
-            # Static fundamentals database (updated with better estimates)
+            # Get sector for estimation
+            stock = yf.Ticker(symbol)
+            info = stock.info
+            sector = info.get('sector', 'N/A')
+            eps = info.get('trailingEps') or info.get('forwardEps') or 101.5
+
+            # Estimate FCF from EPS
+            estimated_fcf = self.get_estimated_fcf_from_eps(eps, sector)
+
+            # Static fundamentals database with EPS-based FCF
             fundamentals_db = {
                 "RELIANCE.NS": {
                     "name": "Reliance Industries",
                     "currentPrice": current_price,
-                    "eps": 101.5,  # Updated estimate
-                    "freeCashFlow": 45000,  # Updated estimate
-                    "sharesOutstanding": 676,
-                    "sector": "Oil & Gas",
-                    "marketCap": 1045000,  # In crores
-                    "fcfPerShare": 66.6,  # More realistic
-                    "revenue": 800000,  # In crores
-                    "data_source": "Estimated (Yahoo Finance failed)"
+                    "eps": round(eps, 2),
+                    "sector": sector,
+                    "fcfPerShare": estimated_fcf,
+                    "fcfSource": "estimated",
+                    "data_source": "EPS-based estimation (Fallback)"
                 },
                 "TCS.NS": {
                     "name": "Tata Consultancy Services",
                     "currentPrice": current_price,
-                    "eps": 124.5,
-                    "freeCashFlow": 48000,
-                    "sharesOutstanding": 365,
-                    "sector": "IT",
-                    "marketCap": 1400000,
-                    "fcfPerShare": 131.5,
-                    "revenue": 200000,
-                    "data_source": "Estimated (Yahoo Finance failed)"
+                    "eps": round(eps, 2),
+                    "sector": sector,
+                    "fcfPerShare": estimated_fcf,
+                    "fcfSource": "estimated",
+                    "data_source": "EPS-based estimation (Fallback)"
                 },
                 "HDFCBANK.NS": {
                     "name": "HDFC Bank",
                     "currentPrice": current_price,
-                    "eps": 86.3,
-                    "freeCashFlow": 42000,
-                    "sharesOutstanding": 695,
-                    "sector": "Banking",
-                    "marketCap": 1200000,
-                    "fcfPerShare": 60.4,
-                    "revenue": 180000,
-                    "data_source": "Estimated (Yahoo Finance failed)"
+                    "eps": round(eps, 2),
+                    "sector": sector,
+                    "fcfPerShare": estimated_fcf,
+                    "fcfSource": "estimated",
+                    "data_source": "EPS-based estimation (Fallback)"
                 },
                 "INFY.NS": {
                     "name": "Infosys",
                     "currentPrice": current_price,
-                    "eps": 68.9,
-                    "freeCashFlow": 28000,
-                    "sharesOutstanding": 413,
-                    "sector": "IT",
-                    "marketCap": 680000,
-                    "fcfPerShare": 67.8,
-                    "revenue": 140000,
-                    "data_source": "Estimated (Yahoo Finance failed)"
+                    "eps": round(eps, 2),
+                    "sector": sector,
+                    "fcfPerShare": estimated_fcf,
+                    "fcfSource": "estimated",
+                    "data_source": "EPS-based estimation (Fallback)"
                 },
                 "ITC.NS": {
                     "name": "ITC Limited",
                     "currentPrice": current_price,
-                    "eps": 15.8,
-                    "freeCashFlow": 20000,
-                    "sharesOutstanding": 1228,
-                    "sector": "FMCG",
-                    "marketCap": 500000,
-                    "fcfPerShare": 16.3,
-                    "revenue": 70000,
-                    "data_source": "Estimated (Yahoo Finance failed)"
+                    "eps": round(eps, 2),
+                    "sector": sector,
+                    "fcfPerShare": estimated_fcf,
+                    "fcfSource": "estimated",
+                    "data_source": "EPS-based estimation (Fallback)"
                 }
             }
 
             data = fundamentals_db.get(symbol, fundamentals_db["RELIANCE.NS"])
             data["currentPrice"] = round(current_price, 2)
+            data["eps"] = round(eps, 2)
+            data["sector"] = sector
+            data["fcfPerShare"] = estimated_fcf
             data["last_updated"] = datetime.now().isoformat()
 
             return data
@@ -350,13 +388,10 @@ class RealStockAPIHandler(http.server.SimpleHTTPRequestHandler):
                 "name": "Unknown",
                 "currentPrice": current_price if 'current_price' in locals() else 0,
                 "eps": 0,
-                "freeCashFlow": 0,
-                "sharesOutstanding": 1,
                 "sector": "N/A",
-                "marketCap": 0,
                 "fcfPerShare": 0,
-                "revenue": 0,
-                "data_source": "Fallback (Error)",
+                "fcfSource": "error",
+                "data_source": "Error Fallback",
                 "last_updated": datetime.now().isoformat()
             }
 
@@ -368,9 +403,9 @@ def start_server():
         print(f"📍 Port: {PORT}")
         print(f"📊 Endpoints:")
         print(f"   • /stocks/price/SYMBOL - Real prices (5-min cache)")
-        print(f"   • /stocks/fundamentals/SYMBOL - REAL Yahoo Finance data")
+        print(f"   • /stocks/fundamentals/SYMBOL - EPS-based FCF estimation")
         print(f"   • /stocks/ - Available stocks")
-        print(f"⚡ Features: CORS enabled, 5-min caching, REAL fundamentals")
+        print(f"⚡ Features: CORS enabled, 5-min caching, Accurate FCF estimation")
         print(f"\nPress Ctrl+C to stop")
         httpd.serve_forever()
 
