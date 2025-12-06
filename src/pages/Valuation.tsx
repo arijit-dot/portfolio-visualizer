@@ -42,89 +42,18 @@ const Valuation: React.FC = () => {
     // Use environment variable for API base URL
     const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://portfolio-visualizer-yql8.onrender.com';
 
-    // Default fundamental data (fallback) - UPDATED with better FCF estimates
-    const defaultFundamentals: { [key: string]: StockFundamentals } = {
-        "RELIANCE.NS": {
-            symbol: "RELIANCE.NS",
-            name: "Reliance Industries Limited",
-            currentPrice: 2450,
-            eps: 101.5,
-            sharesOutstanding: 676,
-            sector: "Oil & Gas",
-            marketCap: 1045000,
-            revenue: 800000,
-            operatingCashFlow: 115000,
-            capitalExpenditure: 50000,
-            fcfPerShare: 66.6, // EPS * 1.03 for Oil & Gas
-            fcfSource: "estimated",
-            fcfNote: "Estimated from EPS (1.03×)",
-            data_source: "Default (Backend unavailable)"
-        },
-        "TCS.NS": {
-            symbol: "TCS.NS",
-            name: "Tata Consultancy Services",
-            currentPrice: 3450,
-            eps: 124.5,
-            sharesOutstanding: 365,
-            sector: "IT",
-            marketCap: 1400000,
-            revenue: 200000,
-            operatingCashFlow: 52000,
-            capitalExpenditure: 7000,
-            fcfPerShare: 93.4, // EPS * 0.75 for IT
-            fcfSource: "estimated",
-            fcfNote: "Estimated from EPS (0.75×)",
-            data_source: "Default (Backend unavailable)"
-        },
-        "HDFCBANK.NS": {
-            symbol: "HDFCBANK.NS",
-            name: "HDFC Bank",
-            currentPrice: 1650,
-            eps: 86.3,
-            sharesOutstanding: 695,
-            sector: "Banking",
-            marketCap: 1200000,
-            revenue: 185000,
-            operatingCashFlow: 45000,
-            capitalExpenditure: 1500,
-            fcfPerShare: 56.1, // EPS * 0.65 for Banking
-            fcfSource: "estimated",
-            fcfNote: "Estimated from EPS (0.65×)",
-            data_source: "Default (Backend unavailable)"
-        },
-        "INFY.NS": {
-            symbol: "INFY.NS",
-            name: "Infosys",
-            currentPrice: 1850,
-            eps: 68.9,
-            sharesOutstanding: 413,
-            sector: "IT",
-            marketCap: 680000,
-            revenue: 145000,
-            operatingCashFlow: 32000,
-            capitalExpenditure: 7000,
-            fcfPerShare: 51.7, // EPS * 0.75 for IT
-            fcfSource: "estimated",
-            fcfNote: "Estimated from EPS (0.75×)",
-            data_source: "Default (Backend unavailable)"
-        },
-        "ITC.NS": {
-            symbol: "ITC.NS",
-            name: "ITC Limited",
-            currentPrice: 450,
-            eps: 15.8,
-            sharesOutstanding: 1228,
-            sector: "FMCG",
-            marketCap: 500000,
-            revenue: 70000,
-            operatingCashFlow: 22000,
-            capitalExpenditure: 4000,
-            fcfPerShare: 13.4, // EPS * 0.85 for FMCG
-            fcfSource: "estimated",
-            fcfNote: "Estimated from EPS (0.85×)",
-            data_source: "Default (Backend unavailable)"
-        }
-    };
+    // 🔍 DEBUG: Add logging
+    useEffect(() => {
+        console.log('🔄 Valuation component mounted');
+    }, []);
+
+    // 🔍 DEBUG: Log when fundamentalData changes
+    useEffect(() => {
+        console.log('📊 fundamentalData updated:', {
+            RELIANCE: fundamentalData['RELIANCE.NS']?.fcfPerShare,
+            TCS: fundamentalData['TCS.NS']?.fcfPerShare
+        });
+    }, [fundamentalData]);
 
     // Fetch real prices when selected stock changes
     useEffect(() => {
@@ -155,7 +84,7 @@ const Valuation: React.FC = () => {
                 }
             } catch (error) {
                 console.error('❌ Network error fetching valuation data:', error);
-                console.log('🔄 Falling back to mock data for:', selectedStock.symbol);
+                // Don't fallback to mock data - keep as is
             } finally {
                 setLoading(prev => ({ ...prev, [selectedStock.symbol]: false }));
             }
@@ -164,87 +93,122 @@ const Valuation: React.FC = () => {
         fetchRealPrice();
     }, [selectedStock, API_BASE]);
 
-    // Fetch fundamental data from backend
+    // 🔥 CRITICAL FIX: Fetch fundamental data from backend - NO DEFAULTS!
     useEffect(() => {
         const fetchFundamentalData = async () => {
             if (!selectedStock) return;
 
+            console.log(`🚀 START fetchFundamentalData for ${selectedStock.symbol}`);
             setValuationLoading(prev => ({ ...prev, [selectedStock.symbol]: true }));
 
             try {
-                console.log(`📡 Fetching fundamental data for: ${selectedStock.symbol}`);
+                console.log(`📡 Fetching from backend: ${API_BASE}/stocks/fundamentals/${selectedStock.symbol}`);
 
-                // Fetch from your updated backend
                 const response = await fetch(`${API_BASE}/stocks/fundamentals/${selectedStock.symbol}`);
 
-                if (response.ok) {
-                    const data = await response.json();
-
-                    if (data.success) {
-                        console.log(`✅ Backend fundamental data for ${selectedStock.symbol}:`, data.data);
-
-                        // Store the complete backend response
-                        setFundamentalData(prev => ({
-                            ...prev,
-                            [selectedStock.symbol]: {
-                                symbol: selectedStock.symbol,
-                                name: data.data.name || selectedStock.name,
-                                currentPrice: data.data.currentPrice || 0,
-                                eps: data.data.eps || 0,
-                                freeCashFlow: data.data.freeCashFlow,
-                                sharesOutstanding: data.data.sharesOutstanding || 1,
-                                sector: data.data.sector || 'N/A',
-                                marketCap: data.data.marketCap,
-                                revenue: data.data.revenue,
-                                operatingCashFlow: data.data.operatingCashFlow,
-                                capitalExpenditure: data.data.capitalExpenditure,
-                                // New fields from updated backend
-                                fcfPerShare: data.data.fcfPerShare || 0,
-                                fcfSource: data.data.fcfSource,
-                                fcfNote: data.data.fcfNote,
-                                yahooFcfPerShare: data.data.yahooFcfPerShare,
-                                estimatedFcfPerShare: data.data.estimatedFcfPerShare,
-                                data_source: data.data.data_source,
-                                last_updated: data.data.last_updated
-                            }
-                        }));
-                        console.log(`✅ Loaded fundamental data for ${selectedStock.symbol}`);
-                        return;
-                    }
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} - Backend error`);
                 }
 
-                // Fallback to default data
-                console.log(`🔄 Using default fundamental data for ${selectedStock.symbol}`);
-                setFundamentalData(prev => ({
-                    ...prev,
-                    [selectedStock.symbol]: defaultFundamentals[selectedStock.symbol]
-                }));
+                const data = await response.json();
+                console.log('✅ Backend response:', data);
+
+                if (data.success && data.data) {
+                    console.log(`🎯 Backend returned FCF: ${data.data.fcfPerShare} for ${selectedStock.symbol}`);
+
+                    const backendData: StockFundamentals = {
+                        symbol: selectedStock.symbol,
+                        name: data.data.name || selectedStock.name,
+                        currentPrice: data.data.currentPrice || 0,
+                        eps: data.data.eps || 0,
+                        freeCashFlow: data.data.freeCashFlow,
+                        sharesOutstanding: data.data.sharesOutstanding || 1,
+                        sector: data.data.sector || 'N/A',
+                        marketCap: data.data.marketCap,
+                        revenue: data.data.revenue,
+                        operatingCashFlow: data.data.operatingCashFlow,
+                        capitalExpenditure: data.data.capitalExpenditure,
+                        fcfPerShare: data.data.fcfPerShare || 0,
+                        fcfSource: data.data.fcfSource,
+                        fcfNote: data.data.fcfNote,
+                        yahooFcfPerShare: data.data.yahooFcfPerShare,
+                        estimatedFcfPerShare: data.data.estimatedFcfPerShare,
+                        data_source: data.data.data_source,
+                        last_updated: data.data.last_updated
+                    };
+
+                    console.log(`📝 Setting state with FCF: ${backendData.fcfPerShare}`);
+                    setFundamentalData(prev => {
+                        const newState = {
+                            ...prev,
+                            [selectedStock.symbol]: backendData
+                        };
+                        console.log(`✅ State updated for ${selectedStock.symbol}`);
+                        return newState;
+                    });
+                    return;
+                } else {
+                    throw new Error('Backend returned success: false');
+                }
 
             } catch (error) {
-                console.error('❌ Error fetching fundamental data:', error);
-                // Use default data
+                console.error(`❌ ERROR fetching ${selectedStock.symbol}:`, error);
+
+                // ⚠️ CRITICAL: DO NOT use defaults - show error state instead
                 setFundamentalData(prev => ({
                     ...prev,
-                    [selectedStock.symbol]: defaultFundamentals[selectedStock.symbol]
+                    [selectedStock.symbol]: {
+                        symbol: selectedStock.symbol,
+                        name: selectedStock.name,
+                        currentPrice: 0,
+                        eps: 0,
+                        sharesOutstanding: 1,
+                        sector: 'N/A',
+                        fcfPerShare: 0,
+                        fcfSource: 'error',
+                        fcfNote: `Error: ${error.message}`,
+                        error: true
+                    }
                 }));
+
             } finally {
                 setValuationLoading(prev => ({ ...prev, [selectedStock.symbol]: false }));
+                console.log(`🏁 END fetchFundamentalData for ${selectedStock.symbol}`);
             }
         };
 
         fetchFundamentalData();
     }, [selectedStock, API_BASE]);
 
-    // Get stock data with real price if available
+    // Get stock data - ONLY use backend data
     const getStockData = (): StockFundamentals & { isRealData: boolean } => {
-        const baseData = fundamentalData[selectedStock.symbol] || defaultFundamentals[selectedStock.symbol] || defaultFundamentals["RELIANCE.NS"];
+        console.log(`🔍 getStockData called for ${selectedStock.symbol}`);
+
+        // ONLY use fundamentalData from backend - NO DEFAULTS!
+        const baseData = fundamentalData[selectedStock.symbol];
         const realPrice = realStockPrices[selectedStock.symbol];
+
+        if (!baseData) {
+            console.log(`⚠️ No data yet for ${selectedStock.symbol}, returning loading state`);
+            return {
+                symbol: selectedStock.symbol,
+                name: selectedStock.name,
+                currentPrice: realPrice || 0,
+                eps: 0,
+                sharesOutstanding: 1,
+                sector: 'N/A',
+                fcfPerShare: 0,
+                fcfSource: 'loading',
+                isRealData: !!realPrice
+            };
+        }
+
+        console.log(`✅ Using backend FCF: ${baseData.fcfPerShare} for ${selectedStock.symbol}`);
 
         return {
             ...baseData,
-            currentPrice: realPrice || baseData.currentPrice,
+            currentPrice: realPrice || baseData.currentPrice || 0,
             name: selectedStock.name || baseData.name,
-            symbol: selectedStock.symbol,
             isRealData: !!realPrice
         };
     };
@@ -253,8 +217,9 @@ const Valuation: React.FC = () => {
 
     // Get FCF per share - use accurate value from backend
     const getFreeCashFlowPerShare = (): number => {
-        // Use the accurate fcfPerShare from backend (already calculated correctly)
-        return stockData.fcfPerShare || 0;
+        const fcf = stockData.fcfPerShare || 0;
+        console.log(`💰 getFreeCashFlowPerShare: ${fcf} for ${selectedStock.symbol}`);
+        return fcf;
     };
 
     // CORRECT DCF Calculation using accurate FCF
@@ -277,6 +242,7 @@ const Valuation: React.FC = () => {
 
         // Get accurate FCF per share from backend
         const fcfPerShare = getFreeCashFlowPerShare();
+        console.log(`📈 DCF calculation with FCF: ${fcfPerShare}`);
 
         let presentValue = 0;
         let currentFCF = fcfPerShare;
@@ -300,6 +266,8 @@ const Valuation: React.FC = () => {
         // Calculate Margin of Safety
         const marginOfSafety = intrinsicValue > 0 ?
             ((intrinsicValue - stockData.currentPrice) / intrinsicValue) * 100 : 0;
+
+        console.log(`🎯 DCF Result: Intrinsic=${intrinsicValue}, MOS=${marginOfSafety}%`);
 
         return {
             intrinsicValue,
@@ -351,6 +319,8 @@ const Valuation: React.FC = () => {
     const getFcfSourceColor = (source?: string) => {
         if (source === 'yahoo') return 'bg-blue-100 text-blue-800';
         if (source === 'estimated') return 'bg-purple-100 text-purple-800';
+        if (source === 'error') return 'bg-red-100 text-red-800';
+        if (source === 'loading') return 'bg-yellow-100 text-yellow-800';
         return 'bg-gray-100 text-gray-800';
     };
 
@@ -358,7 +328,9 @@ const Valuation: React.FC = () => {
     const getFcfSourceText = (source?: string) => {
         if (source === 'yahoo') return 'Yahoo Finance';
         if (source === 'estimated') return 'EPS-based Estimate';
-        return 'Default';
+        if (source === 'error') return 'Error Loading';
+        if (source === 'loading') return 'Loading...';
+        return 'Unknown';
     };
 
     return (
