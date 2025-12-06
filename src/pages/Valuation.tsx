@@ -213,6 +213,35 @@ const Valuation: React.FC = () => {
         };
     };
 
+    // NEW: Format Yahoo Finance numbers (which are in raw format) to Indian numbering system
+    const formatYahooNumber = (value: number): string => {
+        if (!value || value === 0) return 'N/A';
+
+        // Yahoo Finance gives numbers in raw format
+        // Convert to crores (1 crore = 10,000,000)
+        const inCrores = value / 10000000;
+
+        // Format with Indian numbering system
+        if (inCrores >= 100000) {
+            // For lakh crores (e.g., Reliance: ~10.5 lakh crore)
+            return `₹${(inCrores / 100000).toLocaleString('en-IN', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            })} Lakh Cr`;
+        } else if (inCrores >= 1000) {
+            // For thousand crores (e.g., Infosys: ~670 thousand crore)
+            return `₹${(inCrores / 1000).toLocaleString('en-IN', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            })} Thousand Cr`;
+        } else {
+            // For regular crores
+            return `₹${inCrores.toLocaleString('en-IN', {
+                maximumFractionDigits: 0
+            })} Cr`;
+        }
+    };
+
     const stockData = getStockData();
 
     // Get FCF per share - use accurate value from backend
@@ -307,7 +336,7 @@ const Valuation: React.FC = () => {
         'INVALID': 'text-gray-600'
     }[recommendation];
 
-    // Format large numbers
+    // Format large numbers (keep this for other uses if needed)
     const formatCrores = (value: number) => {
         if (!value) return 'N/A';
         if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L Cr`;
@@ -409,7 +438,9 @@ const Valuation: React.FC = () => {
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600 text-sm sm:text-base">Market Cap:</span>
-                                <span className="font-medium text-sm sm:text-base">{formatCrores(stockData.marketCap || 0)}</span>
+                                <span className="font-medium text-sm sm:text-base text-right">
+                                    {formatYahooNumber(stockData.marketCap || 0)}
+                                </span>
                             </div>
                             {stockData.data_source && (
                                 <div className="text-xs text-gray-500 italic border-t pt-2">
@@ -644,19 +675,35 @@ const Valuation: React.FC = () => {
                             <div className="text-center p-3 bg-gray-50 rounded-lg">
                                 <div className="text-sm text-gray-600 mb-1">Revenue</div>
                                 <div className="font-bold text-gray-900 text-sm sm:text-base">
-                                    {formatCrores(stockData.revenue || 0)}
+                                    {formatYahooNumber(stockData.revenue || 0)}
                                 </div>
+                                <div className="text-xs text-gray-500 mt-1">Annual (TTM)</div>
                             </div>
                             <div className="text-center p-3 bg-gray-50 rounded-lg">
                                 <div className="text-sm text-gray-600 mb-1">Operating Cash Flow</div>
                                 <div className="font-bold text-gray-900 text-sm sm:text-base">
-                                    {formatCrores(stockData.operatingCashFlow || 0)}
+                                    {formatYahooNumber(stockData.operatingCashFlow || 0)}
                                 </div>
+                                <div className="text-xs text-gray-500 mt-1">Annual</div>
                             </div>
                             <div className="text-center p-3 bg-gray-50 rounded-lg">
                                 <div className="text-sm text-gray-600 mb-1">Capital Expenditure</div>
                                 <div className="font-bold text-gray-900 text-sm sm:text-base">
-                                    {formatCrores(Math.abs(stockData.capitalExpenditure || 0))}
+                                    {formatYahooNumber(Math.abs(stockData.capitalExpenditure || 0))}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">Annual</div>
+                            </div>
+                        </div>
+
+                        {/* Market Cap - Separate bigger display */}
+                        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <div className="text-center">
+                                <div className="text-sm text-blue-700 font-medium mb-1">Market Capitalization</div>
+                                <div className="text-xl sm:text-2xl font-bold text-blue-900">
+                                    {formatYahooNumber(stockData.marketCap || 0)}
+                                </div>
+                                <div className="text-xs text-blue-600 mt-2">
+                                    Total market value of all shares
                                 </div>
                             </div>
                         </div>
